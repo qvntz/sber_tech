@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="messenger",
+    name="service",
     platforms="all",
     packages=find_packages(exclude=["tests"]),
     install_requires=[
