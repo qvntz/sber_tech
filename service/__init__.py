@@ -19,7 +19,7 @@ def main() -> None:
     app = web.Application()
     setup_routes(app)
     setup_middlewares(app)
-    web.run_app(app, port=8080, access_log_class=AccessLogger)
+    web.run_app(app, port=80, access_log_class=AccessLogger)
 
 
 if __name__ == '__main__':
