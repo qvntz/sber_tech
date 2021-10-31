@@ -49,8 +49,6 @@ frame_width = int(cap.get(3))
 frame_height = int(cap.get(4))
 
 size = (frame_width, frame_height)
-fourcc = cv2.VideoWriter_fourcc(*'XVID')
-out = cv2.VideoWriter('output.avi',fourcc, 20.0, (640,480))
 x = 0
 frames = dict()
 while (cap.isOpened()):
@@ -78,7 +76,7 @@ while (cap.isOpened()):
         # prediction
         confidence = detections[0, 0, i, 2]
         # filter out weak detections
-        if confidence > 0.9:
+        if confidence > 0.4:
             # compute the (x, y)-coordinates of the bounding box for the
             # face
             box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
@@ -111,12 +109,11 @@ while (cap.isOpened()):
                 #face = cv2.imread('gavv.png').resize(w, h)
                 # put the blurred face into the original image
                 image[startY: endY, startX: endX] = face
+                frames.update({x: {'corner_1': [startX, startY], 'corner_2': [endX, endY]}})
             text = "{}: {:.2f}%".format(name, proba * 100)
             y = startY - 10 if startY - 10 > 10 else startY + 10
             cv2.rectangle(image, (startX, startY), (endX, endY), (0, 0, 255), 2)
             cv2.putText(image, text, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
-    out.write(image)
-    frames.update({x: {'corner_1' : [startX,startY], 'corner_2' : [endX, endY]}})
     cv2.imshow('Thresh', image)
     # define q as the exit button
     if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -124,7 +121,6 @@ while (cap.isOpened()):
 
 # release the video capture object
 cap.release()
-out.release()
-
 # Closes all the windows currently opened.
 cv2.destroyAllWindows()
+print(frames)
