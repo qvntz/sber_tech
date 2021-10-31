@@ -25,13 +25,13 @@ ap.add_argument("-c", "--confidence", type=float, default=0.5,
                 help="minimum probability to filter weak detections")
 args = vars(ap.parse_args())
 # load our serialized face detector from disk
-print("[INFO] loading face detector...")
+#print("[INFO] loading face detector...")
 protoPath = os.path.sep.join([args["detector"], "deploy.prototxt"])
 modelPath = os.path.sep.join([args["detector"],
                               "res10_300x300_ssd_iter_140000.caffemodel"])
 detector = cv2.dnn.readNetFromCaffe(protoPath, modelPath)
 # load our serialized face embedding model from disk
-print("[INFO] loading face recognizer...")
+#print("[INFO] loading face recognizer...")
 
 embedder = cv2.dnn.readNetFromTorch('face_detection_model/openface.nn4.small2.v1.t7')
 # load the actual face recognition model along with the label encoder
@@ -45,9 +45,14 @@ import numpy as np
 
 # Creating a VideoCapture object to read the video
 cap = cv2.VideoCapture(args["video"])
-out = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 30, (800,600))
+frame_width = int(cap.get(3))
+frame_height = int(cap.get(4))
+
+size = (frame_width, frame_height)
+fourcc = cv2.VideoWriter_fourcc(*'XVID')
+out = cv2.VideoWriter('output.avi',fourcc, 20.0, (640,480))
 x = 0
-# Loop until the end of the video
+frames = dict()
 while (cap.isOpened()):
 
     # Capture frame-by-frame
@@ -73,7 +78,7 @@ while (cap.isOpened()):
         # prediction
         confidence = detections[0, 0, i, 2]
         # filter out weak detections
-        if confidence > args["confidence"]:
+        if confidence > 0.9:
             # compute the (x, y)-coordinates of the bounding box for the
             # face
             box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
@@ -103,6 +108,7 @@ while (cap.isOpened()):
                 kernel_width = (w // 7) | 1
                 kernel_height = (h // 7) | 1
                 face = cv2.GaussianBlur(face, (kernel_width, kernel_height), 0)
+                #face = cv2.imread('gavv.png').resize(w, h)
                 # put the blurred face into the original image
                 image[startY: endY, startX: endX] = face
             text = "{}: {:.2f}%".format(name, proba * 100)
@@ -110,9 +116,10 @@ while (cap.isOpened()):
             cv2.rectangle(image, (startX, startY), (endX, endY), (0, 0, 255), 2)
             cv2.putText(image, text, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
     out.write(image)
+    frames.update({x: {'corner_1' : [startX,startY], 'corner_2' : [endX, endY]}})
     cv2.imshow('Thresh', image)
     # define q as the exit button
-    if cv2.waitKey(25) & 0xFF == ord('q'):
+    if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
 # release the video capture object
@@ -121,4 +128,3 @@ out.release()
 
 # Closes all the windows currently opened.
 cv2.destroyAllWindows()
-
